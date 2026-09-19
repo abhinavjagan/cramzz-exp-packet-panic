@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#08110f"/>
+  <g fill="none" stroke="#25433b" stroke-width="8">
+    <path d="M110 380 330 220 570 330 820 190 1085 315"/>
+    <path d="M110 380 340 470 570 330 815 465 1085 315"/>
+  </g>
+  <g fill="#baff65" stroke="#08110f" stroke-width="12">
+    <circle cx="110" cy="380" r="32"/><circle cx="330" cy="220" r="32"/><circle cx="570" cy="330" r="32"/><circle cx="820" cy="190" r="32"/><circle cx="1085" cy="315" r="32"/>
+  </g>
+  <circle cx="340" cy="470" r="32" fill="#ff8a72" stroke="#08110f" stroke-width="12"/>
+  <circle cx="815" cy="465" r="32" fill="#6df5cf" stroke="#08110f" stroke-width="12"/>
+  <text x="84" y="124" fill="#baff65" font-family="ui-monospace, monospace" font-size="30" letter-spacing="5">CRAMZZ LAB / DAILY 001</text>
+  <text x="80" y="205" fill="#f4f5e9" font-family="Arial, sans-serif" font-weight="800" font-size="82">PACKET PANIC</text>
+  <text x="80" y="565" fill="#a8b8b0" font-family="Arial, sans-serif" font-size="34">Route fast. Route safe. Beat the TTL.</text>
+</svg>

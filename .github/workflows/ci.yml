@@ -1,0 +1,74 @@
+name: Packet Panic CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: packet-panic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analytics-contract:
+    uses: abhinavjagan/cramzz-workflows/.github/workflows/analytics-contract.yml@24c00b5fff8727ddc5020218243c6de0c768690f
+    with:
+      contract_path: analytics-contract.json
+      workflows_ref: 24c00b5fff8727ddc5020218243c6de0c768690f
+    permissions:
+      contents: read
+
+  secrets:
+    uses: abhinavjagan/cramzz-workflows/.github/workflows/secret-scan.yml@24c00b5fff8727ddc5020218243c6de0c768690f
+    permissions:
+      contents: read
+
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run secrets:scan
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_BASE_PATH: /e/packet-panic/
+          EXPERIMENT_SOURCE_COMMIT: ${{ github.sha }}
+      - run: npm run manifest:verify -- "${{ github.sha }}"
+      - run: npm run metadata:verify
+      - run: npm run release:verify
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: packet-panic-dist-${{ github.sha }}
+          path: dist
+          if-no-files-found: error
+
+  browser-smoke:
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:e2e
+        env:
+          VITE_BASE_PATH: /e/packet-panic/
+          EXPERIMENT_SOURCE_COMMIT: ${{ github.sha }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with:
+          name: packet-panic-playwright-${{ github.sha }}
+          path: test-results
+          if-no-files-found: ignore

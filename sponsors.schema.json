@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Packet Panic Founding Node placements",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "placements"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "placements": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "description": "One paid Founding Node booking. The runtime validator additionally requires the inclusive startsOn/endsOn window to be exactly 30 calendar days and rejects overlapping bookings on one router.",
+        "additionalProperties": false,
+        "required": ["id", "nodeId", "brandName", "destinationUrl", "startsOn", "endsOn", "reviewed", "paymentStatus"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,39}$" },
+          "nodeId": { "enum": ["edge", "cache", "core", "relay", "transit", "pop", "gateway"] },
+          "brandName": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "destinationUrl": { "type": "string", "format": "uri", "pattern": "^https://" },
+          "logoPath": { "type": "string", "pattern": "^sponsors/[A-Za-z0-9_-]+\\.(png|webp)$", "description": "Local PNG or WebP under public/sponsors; the build rejects files larger than 10 MB." },
+          "startsOn": { "type": "string", "format": "date", "description": "Inclusive first day of an exactly 30-day booking." },
+          "endsOn": { "type": "string", "format": "date", "description": "Inclusive last day; runtime validation requires this to be day 30 from startsOn." },
+          "reviewed": { "const": true },
+          "paymentStatus": { "const": "captured" }
+        }
+      }
+    }
+  }
+}

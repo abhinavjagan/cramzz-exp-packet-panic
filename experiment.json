@@ -1,0 +1,16 @@
+{
+  "$schema": "https://cramzz.space/schemas/experiment.schema.json",
+  "slug": "packet-panic",
+  "title": "Packet Panic",
+  "repository": "https://github.com/abhinavjagan/cramzz-exp-packet-panic",
+  "pinnedCommit": "UNPINNED",
+  "status": "building",
+  "launchDate": null,
+  "hypothesis": "A 30–60 second daily routing puzzle will earn repeat play and sharing among developers and infrastructure-curious people, creating credible sponsor inventory.",
+  "sponsorInventory": [
+    { "id": "founding-node", "label": "Founding Node · 20 total bookings · max 7 concurrent · 30 days each", "priceInr": 499, "quantity": 20, "status": "available" },
+    { "id": "daily-challenge", "label": "Daily Challenge Sponsor · unlocks at 250 completed plays", "priceInr": 1999, "quantity": 1, "status": "locked" },
+    { "id": "season", "label": "Season Sponsor · 30 days · unlocks at 1,000 completed plays", "priceInr": 9999, "quantity": 1, "status": "locked" }
+  ],
+  "analyticsIdentifier": "packet-panic-v1"
+}
