@@ -45,7 +45,7 @@ const commonAnalytics = {
   source,
   campaign,
   referrer_class: classifyReferrer(document.referrer, window.location.hostname),
-  returning_player: hasPlayedBefore(progress),
+  returning_player: hasPlayedBefore(progress, puzzle.id),
 };
 
 const sponsorDestination = resolveSponsorFormDestination(import.meta.env.VITE_SPONSOR_FORM_URL, window.location.origin);
@@ -271,7 +271,7 @@ function renderConditions(): void {
   `;
 }
 
-function renderGame(): void {
+function renderGame(restoreGameplayFocus = false): void {
   const metrics = calculateMetrics(puzzle, route);
   const current = route.at(-1) ?? "src";
   const nextEdges = status === "routing" ? availableEdges(puzzle, route) : [];
@@ -331,6 +331,13 @@ function renderGame(): void {
   mustFind<HTMLElement>("#streak-stat-value").innerHTML = `${progress.streak}<span>days</span>`;
 
   if (status !== "routing") renderResult(metrics);
+
+  if (restoreGameplayFocus) {
+    const focusTarget = status === "routing"
+      ? networkMap.querySelector<HTMLButtonElement>("[data-node-id]:not(:disabled)")
+      : resultPanel.querySelector<HTMLButtonElement>("button");
+    focusTarget?.focus();
+  }
 }
 
 function renderEdge(edge: NetworkEdge, used: boolean, fromCurrent: boolean): string {
@@ -381,7 +388,7 @@ function chooseNode(nodeId: NodeId): void {
     const node = getNode(puzzle, nodeId);
     announce(`Packet reached ${node.label}. ${puzzle.maxHops - metrics.hops} hops remain.`);
   }
-  renderGame();
+  renderGame(true);
 }
 
 function completeGame(metrics: RouteMetrics): void {
@@ -435,8 +442,7 @@ function renderResult(metrics: RouteMetrics): void {
     hasStarted = false;
     resultPanel.hidden = true;
     announce("Choose a new route. Your first result remains in today's streak.");
-    renderGame();
-    networkMap.querySelector<HTMLButtonElement>("[data-node-id]:not(:disabled)")?.focus();
+    renderGame(true);
   });
 }
 
