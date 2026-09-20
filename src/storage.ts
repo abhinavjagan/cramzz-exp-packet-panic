@@ -113,6 +113,6 @@ export function saveProgress(
   }
 }
 
-export function hasPlayedBefore(progress: PlayerProgress): boolean {
-  return Object.keys(progress.completions).length > 0;
+export function hasPlayedBefore(progress: PlayerProgress, currentPuzzleId: string): boolean {
+  return Object.keys(progress.completions).some((puzzleId) => puzzleId !== currentPuzzleId);
 }

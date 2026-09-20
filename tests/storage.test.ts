@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_PROGRESS, loadProgress, progressStorageKey, recordCompletion, saveProgress } from "../src/storage";
+import {
+  EMPTY_PROGRESS,
+  hasPlayedBefore,
+  loadProgress,
+  progressStorageKey,
+  recordCompletion,
+  saveProgress,
+} from "../src/storage";
 import type { CompletionRecord } from "../src/types";
 
 function completion(puzzleId: string, won = true): CompletionRecord {
@@ -19,6 +26,18 @@ describe("local player progress", () => {
   it("does not count a replay twice", () => {
     const first = recordCompletion({ ...EMPTY_PROGRESS, completions: {} }, completion("2026-09-20"));
     expect(recordCompletion(first, completion("2026-09-20"))).toBe(first);
+  });
+
+  it("does not call a same-puzzle reload a returning player", () => {
+    const progress = recordCompletion({ ...EMPTY_PROGRESS, completions: {} }, completion("2026-09-20"));
+
+    expect(hasPlayedBefore(progress, "2026-09-20")).toBe(false);
+  });
+
+  it("calls a player returning only after a different puzzle completion", () => {
+    const progress = recordCompletion({ ...EMPTY_PROGRESS, completions: {} }, completion("2026-09-20"));
+
+    expect(hasPlayedBefore(progress, "2026-09-21")).toBe(true);
   });
 
   it("does not give losses a streak", () => {

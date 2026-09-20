@@ -130,13 +130,67 @@ test("a failed clipboard fallback does not report a completed share", async ({ p
   expect(await capturedAnalyticsEvents(page)).not.toContain("share_completed");
 });
 
-test("keyboard players can select an available next hop", async ({ page }) => {
-  await page.goto(`?p=${offsetDate(PUZZLE_EPOCH, 1)}`);
+test("keyboard focus follows every hop through a completed route", async ({ page }) => {
+  await page.goto(`?p=${PUZZLE_EPOCH}`);
   const available = page.locator("[data-node-id]:not(:disabled)").first();
   await available.focus();
   await expect(available).toBeFocused();
-  await available.press("Enter");
-  await expect(page.locator("#route-path > span:not(.route-arrow)")).toHaveCount(2);
+
+  let completed = false;
+  for (let hop = 1; hop <= 6; hop += 1) {
+    await expect(page.locator("[data-node-id]:not(:disabled):focus")).toHaveCount(1);
+    await page.keyboard.press("Enter");
+    if (await page.getByText("PACKET DELIVERED", { exact: true }).count()) {
+      completed = true;
+      break;
+    }
+    await expect(page.locator("[data-node-id]:not(:disabled):focus")).toHaveCount(1);
+  }
+
+  expect(completed).toBe(true);
+  await expect(page.getByRole("button", { name: /Share result/i })).toBeFocused();
+});
+
+test("same-puzzle reloads do not mark a player as returning", async ({ page }) => {
+  await page.addInitScript(() => {
+    const capturedAnalytics: Array<{ event: string; properties: { returning_player?: boolean } }> = [];
+    Object.assign(window, { __capturedAnalytics: capturedAnalytics });
+    window.addEventListener("cramzz:analytics", (event) => {
+      capturedAnalytics.push((event as CustomEvent<{
+        event: string;
+        properties: { returning_player?: boolean };
+      }>).detail);
+    });
+  });
+  await page.goto(`?p=${PUZZLE_EPOCH}`);
+  const puzzle = generatePuzzle(PUZZLE_EPOCH);
+  for (const nodeId of puzzle.guaranteedRoute.slice(1)) {
+    await page.locator(`[data-node-id="${nodeId}"]`).click();
+  }
+
+  await page.reload();
+  expect(await returningPlayerForExperimentView(page)).toBe(false);
+
+  await page.evaluate((previousPuzzleId) => {
+    const storageKey = Object.keys(localStorage)
+      .find((key) => key.startsWith("cramzz:packet-panic:progress:v2:"));
+    if (!storageKey) throw new Error("Player progress was not stored");
+    const progress = JSON.parse(localStorage.getItem(storageKey) ?? "null") as {
+      completions: Record<string, unknown>;
+    };
+    progress.completions[previousPuzzleId] = {
+      puzzleId: previousPuzzleId,
+      won: true,
+      score: 800,
+      grade: "A",
+      hops: 4,
+      completedAt: `${previousPuzzleId}T10:00:00Z`,
+    };
+    localStorage.setItem(storageKey, JSON.stringify(progress));
+  }, offsetDate(PUZZLE_EPOCH, -1));
+
+  await page.reload();
+  expect(await returningPlayerForExperimentView(page)).toBe(true);
 });
 
 test("mobile layout stays inside the viewport", async ({ page }) => {
@@ -180,6 +234,15 @@ test("interactive routes stay named and reduced-motion preferences are honored",
 
 async function capturedAnalyticsEvents(page: import("@playwright/test").Page): Promise<string[]> {
   return page.evaluate(() => (window as Window & { __capturedEvents?: string[] }).__capturedEvents ?? []);
+}
+
+async function returningPlayerForExperimentView(page: import("@playwright/test").Page): Promise<boolean | undefined> {
+  return page.evaluate(() => {
+    const captured = (window as Window & {
+      __capturedAnalytics?: Array<{ event: string; properties: { returning_player?: boolean } }>;
+    }).__capturedAnalytics ?? [];
+    return captured.find((entry) => entry.event === "experiment_view")?.properties.returning_player;
+  });
 }
 
 function offsetDate(date: string, days: number): string {
